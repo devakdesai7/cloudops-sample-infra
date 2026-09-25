@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  api-gateway:
+    build: ./services/api-gateway
+    container_name: api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - SERVICE_NAME=api-gateway
+      - ORDER_SERVICE_URL=http://order-service:3001
+      - LOG_DB_PATH=/logs/shared-logs.db
+    volumes:
+      - shared-logs:/logs
+    depends_on:
+      - order-service
+
+  order-service:
+    build: ./services/order-service
+    container_name: order-service
+    ports:
+      - "3001:3001"
+    environment:
+      - SERVICE_NAME=order-service
+      - PAYMENT_SERVICE_URL=http://payment-service:3002
+      - INVENTORY_SERVICE_URL=http://inventory-service:3003
+      - LOG_DB_PATH=/logs/shared-logs.db
+    volumes:
+      - shared-logs:/logs
+    depends_on:
+      - payment-service
+      - inventory-service
+
+  payment-service:
+    build: ./services/payment-service
+    container_name: payment-service
+    ports:
+      - "3002:3002"
+    environment:
+      - SERVICE_NAME=payment-service
+      - LOG_DB_PATH=/logs/shared-logs.db
+      # This timeout var is our seeded-bug lever — we'll flip this later
+      # via chaos injection to trigger the incident on demand.
+      - DOWNSTREAM_TIMEOUT_MS=${DOWNSTREAM_TIMEOUT_MS}
+    volumes:
+      - shared-logs:/logs
+
+  inventory-service:
+    build: ./services/inventory-service
+    container_name: inventory-service
+    ports:
+      - "3003:3003"
+    environment:
+      - SERVICE_NAME=inventory-service
+      - LOG_DB_PATH=/logs/shared-logs.db
+    volumes:
+      - shared-logs:/logs
+
+volumes:
+  shared-logs:
