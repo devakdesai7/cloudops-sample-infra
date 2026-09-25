@@ -1,5 +1,3 @@
-# cloudops-sample-infra
-=======
 # CloudOps Sample Infra
 
 This repo simulates a customer's microservice environment (4 services + runbooks)
